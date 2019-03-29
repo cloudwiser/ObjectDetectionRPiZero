@@ -54,6 +54,21 @@ limitations under the License.
 namespace tflite {
 namespace label_image {
 
+std::vector<std::array<unsigned char, 4>> ColorPalette {
+    {255, 0, 0, 255},   // red
+    {0, 255, 0, 255},   // lime
+    {0, 0, 255, 255},   // blue
+    {255, 128, 0, 255}, // orange
+    {255, 0, 255, 255}, // magenta
+    {0, 255, 255, 255}, // cyan
+    {255, 255, 0, 255}, // yellow
+    {255, 0, 127, 255}, // pink
+    {128, 255, 0, 255}, // light green
+    {0, 191, 255, 255}  // deep sky blue
+};
+// auto color = ColorPalette[<detection_number>];
+// auto R = color[0], G = color[1], B = color[2], A = color[3];
+
 template<typename T>
 T* TensorData(TfLiteTensor* tensor);
 
@@ -170,9 +185,25 @@ void RunInference(Settings* s) {
   int image_width = IMAGE_WIDTH;
   int image_height = IMAGE_HEIGHT;
   int image_channels = IMAGE_CHANNELS;
-  std::vector<uint8_t> in = read_bmp(s->input_bmp_name, &image_width,
-                                     &image_height, &image_channels, s);
-
+  //std::vector<uint8_t> in = read_bmp(s->input_bmp_name, &image_width,
+  //                                   &image_height, &image_channels, s);
+  
+  std::ifstream file(s->input_bmp_name, std::ios::in | std::ios::binary);
+  if (!file) {
+    LOG(FATAL) << "input file " << s->input_bmp_name << " not found\n";
+    exit(-1);
+  }
+  BMP bmp(s->input_bmp_name.c_str());
+  std::vector<uint8_t> in = parse_bmp(&bmp, &image_width, &image_height, &image_channels, s);
+  
+  // TEST : check the 2 input arrays are the same
+  /*
+  if (memcmp(&in, &in2, sizeof(in)) != 0) {
+    LOG(FATAL) << "Buffers [in] & [in2] are NOT identical\n";
+    exit(-1);
+  }
+  */
+ 
   int input = interpreter->inputs()[0];
   if (s->verbose) 
     LOG(INFO) << "input: " << input << "\n";
@@ -290,10 +321,10 @@ void RunInference(Settings* s) {
     for (int d = 0; d < num_detections; d++) {
       const std::string cls = labels[detection_classes[d] + 1]; // + 1 given tflite conversion removes the initial background class 
       const float score = detection_scores[d];
-      const float ymin = detection_locations[(4 * d) + 0] * image_height;
-      const float xmin = detection_locations[(4 * d) + 1] * image_width;
-      const float ymax = detection_locations[(4 * d) + 2] * image_height;
-      const float xmax = detection_locations[(4 * d) + 3] * image_width;
+      const float ymin = detection_locations[(sizeof(float) * d) + 0] * image_height;
+      const float xmin = detection_locations[(sizeof(float) * d) + 1] * image_width;
+      const float ymax = detection_locations[(sizeof(float) * d) + 2] * image_height;
+      const float xmax = detection_locations[(sizeof(float) * d) + 3] * image_width;
       LOG(INFO) << "------ detection: " << d << " ------\n";
       LOG(INFO) << " score = " << score << "\n";
       LOG(INFO) << " class = " << cls << "\n";

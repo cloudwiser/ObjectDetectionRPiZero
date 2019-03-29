@@ -16,6 +16,9 @@ limitations under the License.
 #ifndef TENSORFLOW_LITE_EXAMPLES_LABEL_IMAGE_LABEL_IMAGE_H_
 #define TENSORFLOW_LITE_EXAMPLES_LABEL_IMAGE_LABEL_IMAGE_H_
 
+#include <vector>
+#include <array>
+
 #include "tensorflow/lite/string.h"
 
 namespace tflite {

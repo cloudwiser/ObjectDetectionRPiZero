@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef TENSORFLOW_LITE_EXAMPLES_LABEL_IMAGE_BITMAP_HELPERS_H_
 #define TENSORFLOW_LITE_EXAMPLES_LABEL_IMAGE_BITMAP_HELPERS_H_
 
+#include "tensorflow/lite/examples/label_image/BMP.h"
 #include "tensorflow/lite/examples/label_image/bitmap_helpers_impl.h"
 #include "tensorflow/lite/examples/label_image/label_image.h"
 
@@ -24,6 +25,10 @@ namespace label_image {
 
 std::vector<uint8_t> read_bmp(const std::string& input_bmp_name, int* width,
                               int* height, int* channels, Settings* s);
+
+std::vector<uint8_t> parse_bmp(BMP* bmp, int* width, int* height, int* channels, Settings* s);
+
+void write_bmp(BMP* bmp, Settings* s);
 
 template <class T>
 void resize(T* out, uint8_t* in, int image_height, int image_width,
