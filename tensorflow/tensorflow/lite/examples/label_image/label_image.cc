@@ -45,7 +45,7 @@ limitations under the License.
 #define IMAGE_WIDTH 300
 #define IMAGE_HEIGHT 300
 #define IMAGE_CHANNELS 3
-#define THRESHOLD 0.6f
+#define THRESHOLD 0.5f
 
 #include "tensorflow/lite/examples/label_image/bitmap_helpers.h"
 #include "tensorflow/lite/examples/label_image/get_top_n.h"
@@ -309,9 +309,9 @@ void RunInference(Settings* s) {
     for (int d = 0; d < num_detections; d++) {
       const std::string cls = labels[detection_classes[d] + 1]; // + 1 given tflite conversion removes the initial background class 
       const float score = detection_scores[d];
-      const float ymin = detection_locations[(sizeof(float) * d) + 0] * image_height;
+      const float ymax = image_height - (detection_locations[(sizeof(float) * d) + 0] * image_height);
       const float xmin = detection_locations[(sizeof(float) * d) + 1] * image_width;
-      const float ymax = detection_locations[(sizeof(float) * d) + 2] * image_height;
+      const float ymin = image_height - (detection_locations[(sizeof(float) * d) + 2] * image_height);
       const float xmax = detection_locations[(sizeof(float) * d) + 3] * image_width;
       LOG(INFO) << "------ detection: " << d << " ------\n";
       LOG(INFO) << " score = " << score << "\n";
@@ -352,9 +352,9 @@ void RunInference(Settings* s) {
     
     // Draw the bounding box on the image
     if (s->output) {
-      const float ymin = detection_locations[(sizeof(float) * detection_index) + 0] * image_height;
+      const float ymax = image_height - (detection_locations[(sizeof(float) * detection_index) + 0] * image_height);
       const float xmin = detection_locations[(sizeof(float) * detection_index) + 1] * image_width;
-      const float ymax = detection_locations[(sizeof(float) * detection_index) + 2] * image_height;
+      const float ymin = image_height - (detection_locations[(sizeof(float) * detection_index) + 2] * image_height);
       const float xmax = detection_locations[(sizeof(float) * detection_index) + 3] * image_width;
       auto color = ColorPalette[detection_index];
       auto R = color[0], G = color[1], B = color[2], A = color[3];

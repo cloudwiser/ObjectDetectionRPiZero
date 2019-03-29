@@ -2,3 +2,6 @@
 *.ipch
 *.bin
 tensorflow/tensorflow/lite/examples/label_image/out_fruit.bmp
+tensorflow/tensorflow/lite/tools/make/gen/rpi_armv6/bin/out_fruit.bmp
+tensorflow/tensorflow/lite/tools/make/gen/rpi_armv6/bin/fruit_display.bmp
+tensorflow/tensorflow/lite/tools/make/gen/rpi_armv6/bin/out_orange_banana_apple.bmp
