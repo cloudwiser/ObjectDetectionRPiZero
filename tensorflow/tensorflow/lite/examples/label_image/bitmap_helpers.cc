@@ -72,6 +72,8 @@ std::vector<uint8_t> decode_bmp(const uint8_t* input, int row_size, int width,
   return output;
 }
 
+/*
+// Original read_bmp() function : replaced with the BMP.h functions
 std::vector<uint8_t> read_bmp(const std::string& input_bmp_name,
                               int* width, int* height, int* channels, Settings* s) {
   int begin, end;
@@ -117,7 +119,7 @@ std::vector<uint8_t> read_bmp(const std::string& input_bmp_name,
   const uint8_t* bmp_pixels = &img_bytes[header_size];
   return decode_bmp(bmp_pixels, row_size, *width, abs(*height), *channels, top_down);
 }
-
+*/
 std::vector<uint8_t> parse_bmp(BMP* bmp, int* width, int* height, int* channels, Settings* s) {
 
   *width = bmp->bmp_info_header.width;

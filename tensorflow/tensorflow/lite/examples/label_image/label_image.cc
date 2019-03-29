@@ -134,11 +134,13 @@ void PrintProfilingInfo(const profiling::ProfileEvent* e, uint32_t op_index,
 }
 
 void RunInference(Settings* s) {
+  
+  // Check we have a model file in the first place...
   if (!s->model_name.c_str()) {
     LOG(ERROR) << "No model file specified\n";
     exit(-1);
   }
-
+  // ...if so, load the model from file
   std::unique_ptr<tflite::FlatBufferModel> model;
   std::unique_ptr<tflite::Interpreter> interpreter;
   model = tflite::FlatBufferModel::BuildFromFile(s->model_name.c_str());
@@ -156,9 +158,11 @@ void RunInference(Settings* s) {
     exit(-1);
   }
 
+  // Attempt to set the accleration flags but depends on your platform i.e. armv6 doesn't support these
   interpreter->UseNNAPI(s->accel);
   interpreter->SetAllowFp16PrecisionForFp32(s->allow_fp16);
 
+  // Provide detailed info on the model structure and datatypes : useful for identifying the input and output points
   if (s->verbose) {
     LOG(INFO) << "tensors size : " << interpreter->tensors_size() << "\n";
     LOG(INFO) << "nodes size   : " << interpreter->nodes_size() << "\n";
@@ -189,9 +193,12 @@ void RunInference(Settings* s) {
     LOG(FATAL) << "input file " << s->input_bmp_name << " not found\n";
     exit(-1);
   }
+  // Read in the BMP file and decode it to the correct, im-memory structure so that the model is fed with a
+  // common input regardless (more or less) of the BMP format
   BMP bmp(s->input_bmp_name.c_str());
   std::vector<uint8_t> in = parse_bmp(&bmp, &image_width, &image_height, &image_channels, s);
   
+  // Instantiare the input and output tensors
   int input = interpreter->inputs()[0];
   if (s->verbose) 
     LOG(INFO) << "input: " << input << "\n";
@@ -202,7 +209,7 @@ void RunInference(Settings* s) {
     LOG(INFO) << "number of inputs : " << inputs.size() << "\n";
     LOG(INFO) << "number of outputs: " << outputs.size() << "\n";
   }
-  // Check the input and output geometry is correct for what we are expecting
+  // Check the input and output geometry is what we are expecting
   if (inputs.size() != EXPECTED_NUM_INPUTS) {
     LOG(FATAL) << "Expecting " << EXPECTED_NUM_INPUTS << " inputs\n";
     exit(-1);
@@ -219,7 +226,8 @@ void RunInference(Settings* s) {
   if (s->verbose)
     PrintInterpreterState(interpreter.get());
 
-  // get input dimension from the input tensor metadata...assuming one input only
+  // Get the input dimension from the input tensor metadata
+  // ...note we are assuming one input only here (rightly or wrongly)
   TfLiteIntArray* dims = interpreter->tensor(input)->dims;
   int wanted_height = dims->data[1];
   int wanted_width = dims->data[2];
@@ -229,6 +237,7 @@ void RunInference(Settings* s) {
               << "wanted width: "  << wanted_width <<  " | "
               << "wanted channels: " << wanted_channels << "\n";
 
+  // Resize the input image array for the required input dimensions required by the model i.e. height, width, number of channels
   switch (interpreter->tensor(input)->type) {
     case kTfLiteFloat32:
       s->input_floating = true;
@@ -247,11 +256,13 @@ void RunInference(Settings* s) {
       exit(-1);
   }
 
+  // Start profiling if requested
   profiling::Profiler* profiler = new profiling::Profiler();
   interpreter->SetProfiler(profiler);
+  if (s->profiling) 
+    profiler->StartProfiling();
 
-  if (s->profiling) profiler->StartProfiling();
-
+  // Run the Invoke() aka inference 1 or more times
   struct timeval start_time, stop_time;
   gettimeofday(&start_time, nullptr);
   LOG(INFO) << "Invoke started...\n";
@@ -266,6 +277,7 @@ void RunInference(Settings* s) {
             << (get_us(stop_time) - get_us(start_time)) / (s->loop_count * 1000)
             << " ms)\n";
 
+  // Finish profiling...if we started it in the first-place
   if (s->profiling) {
     profiler->StopProfiling();
     auto profile_events = profiler->GetProfileEvents();
@@ -278,19 +290,20 @@ void RunInference(Settings* s) {
     }
   }
 
+  // Define our confidence threshold for pruning the results, storage vector for a result and the model outputs
   const float threshold = THRESHOLD;
   std::vector<std::tuple<float, int, int>> top_results;
   int output = interpreter->outputs()[0];
 
   std::vector<string> labels;
   size_t label_count;
-
+  // Read in the object labels file (typically COCO)
   if (ReadLabelsFile(s->labels_file_name, &labels, &label_count) != kTfLiteOk) {
     LOG(FATAL) << "Failed to load labels file: " << s->labels_file_name << " \n";
     exit(-1);
   }
 
-  // Derived from Yijin Liu's repo at https://github.com/YijinLiu/tf-cpu
+  // Get the ouuput tensors (derived from Yijin Liu's repo at https://github.com/YijinLiu/tf-cpu)
   TfLiteTensor* output_locations_ = interpreter->tensor(interpreter->outputs()[0]);
   TfLiteTensor* output_classes_ = interpreter->tensor(interpreter->outputs()[1]);
   TfLiteTensor* output_scores_ = interpreter->tensor(interpreter->outputs()[2]);
@@ -298,6 +311,7 @@ void RunInference(Settings* s) {
   if (s->verbose) 
     LOG(INFO) << "graph output size: " << interpreter->outputs().size() << "\n";
 
+  // Map the output tensors to common datatypes for parsing
   const float* detection_locations = TensorData<float>(output_locations_);
   const float* detection_classes = TensorData<float>(output_classes_);
   const float* detection_scores = TensorData<float>(output_scores_);
@@ -307,11 +321,13 @@ void RunInference(Settings* s) {
     LOG(INFO) << "number of detections: " << num_detections << "\n";
     // Display all the detection details...
     for (int d = 0; d < num_detections; d++) {
-      const std::string cls = labels[detection_classes[d] + 1]; // + 1 given tflite conversion removes the initial background class 
+      // Increment the class index given tflite conversion removes the initial background class
+      const std::string cls = labels[detection_classes[d] + 1];
+      // Extract the score and bounding rectangle...from observation, we seem to have to flip the y-axes
       const float score = detection_scores[d];
-      const float ymax = image_height - (detection_locations[(sizeof(float) * d) + 0] * image_height);
+      const float ymax = image_height * (1 - detection_locations[(sizeof(float) * d) + 0]);
       const float xmin = detection_locations[(sizeof(float) * d) + 1] * image_width;
-      const float ymin = image_height - (detection_locations[(sizeof(float) * d) + 2] * image_height);
+      const float ymin = image_height * (1 - detection_locations[(sizeof(float) * d) + 2]);
       const float xmax = detection_locations[(sizeof(float) * d) + 3] * image_width;
       LOG(INFO) << "------ detection: " << d << " ------\n";
       LOG(INFO) << " score = " << score << "\n";
@@ -323,6 +339,8 @@ void RunInference(Settings* s) {
     }
   }
 
+  // Get the top n results from the candidates
+  // ...although inspecting the SSD_mobilenet_v1_10 model archiotecture, it appears to be limited to 10
   switch (interpreter->tensor(output)->type) {
     case kTfLiteFloat32:
       get_top_n<float>(detection_scores, detection_classes, 
@@ -340,28 +358,28 @@ void RunInference(Settings* s) {
       exit(-1);
   }
 
-  // Display dectection summaries for those above the threshold
+  // Display the dectection summaries for objects above the threshold
   LOG(INFO) << "------ detections > " << threshold << " ------\n";
   for (const auto& result : top_results) {
     const float confidence    = std::get<0>(result);
     const int class_index     = std::get<1>(result);
     const int detection_index = std::get<2>(result);
     
-    // + 1 on the class index given tflite conversion removes the initial background class
+    // Increment the class index given tflite conversion removes the initial background class
     LOG(INFO) << "object [" << detection_index << "] = " << labels[class_index + 1] << " @ " << confidence << "\n";
     
-    // Draw the bounding box on the image
+    // Draw the bounding box for the object on the image - we use the same y axis flip as above
     if (s->output) {
-      const float ymax = image_height - (detection_locations[(sizeof(float) * detection_index) + 0] * image_height);
+      const float ymax = image_height * (1 - detection_locations[(sizeof(float) * detection_index) + 0]);
       const float xmin = detection_locations[(sizeof(float) * detection_index) + 1] * image_width;
-      const float ymin = image_height - (detection_locations[(sizeof(float) * detection_index) + 2] * image_height);
+      const float ymin = image_height * (1 - detection_locations[(sizeof(float) * detection_index) + 2]);
       const float xmax = detection_locations[(sizeof(float) * detection_index) + 3] * image_width;
       auto color = ColorPalette[detection_index];
       auto R = color[0], G = color[1], B = color[2], A = color[3];
       draw_bounding_box(&bmp, xmin, ymin, xmax - xmin, ymax - ymin, R, G, B, A);
     }
   }
-  // Save the image to a (new) bmp file
+  // Save the image out to a (new) BMP-format file
   if (s->output)
     write_bmp(&bmp, s);
 }
