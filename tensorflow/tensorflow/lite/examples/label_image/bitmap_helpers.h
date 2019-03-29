@@ -23,9 +23,6 @@ limitations under the License.
 namespace tflite {
 namespace label_image {
 
-std::vector<uint8_t> read_bmp(const std::string& input_bmp_name, int* width,
-                              int* height, int* channels, Settings* s);
-
 std::vector<uint8_t> parse_bmp(BMP* bmp, int* width, int* height, int* channels, Settings* s);
 
 void write_bmp(BMP* bmp, Settings* s);

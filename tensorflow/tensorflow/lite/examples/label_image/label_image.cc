@@ -185,8 +185,6 @@ void RunInference(Settings* s) {
   int image_width = IMAGE_WIDTH;
   int image_height = IMAGE_HEIGHT;
   int image_channels = IMAGE_CHANNELS;
-  //std::vector<uint8_t> in = read_bmp(s->input_bmp_name, &image_width,
-  //                                   &image_height, &image_channels, s);
   
   std::ifstream file(s->input_bmp_name, std::ios::in | std::ios::binary);
   if (!file) {
@@ -195,15 +193,7 @@ void RunInference(Settings* s) {
   }
   BMP bmp(s->input_bmp_name.c_str());
   std::vector<uint8_t> in = parse_bmp(&bmp, &image_width, &image_height, &image_channels, s);
-  
-  // TEST : check the 2 input arrays are the same
-  /*
-  if (memcmp(&in, &in2, sizeof(in)) != 0) {
-    LOG(FATAL) << "Buffers [in] & [in2] are NOT identical\n";
-    exit(-1);
-  }
-  */
- 
+
   int input = interpreter->inputs()[0];
   if (s->verbose) 
     LOG(INFO) << "input: " << input << "\n";
