@@ -66,8 +66,6 @@ std::vector<std::array<unsigned char, 4>> ColorPalette {
     {128, 255, 0, 255}, // light green
     {0, 191, 255, 255}  // deep sky blue
 };
-// auto color = ColorPalette[<detection_number>];
-// auto R = color[0], G = color[1], B = color[2], A = color[3];
 
 template<typename T>
 T* TensorData(TfLiteTensor* tensor);
@@ -185,7 +183,7 @@ void RunInference(Settings* s) {
   int image_width = IMAGE_WIDTH;
   int image_height = IMAGE_HEIGHT;
   int image_channels = IMAGE_CHANNELS;
-  
+  // std::vector<uint8_t> in = read_bmp(s->input_bmp_name, &image_width, &image_height, &image_channels, s);
   std::ifstream file(s->input_bmp_name, std::ios::in | std::ios::binary);
   if (!file) {
     LOG(FATAL) << "input file " << s->input_bmp_name << " not found\n";
@@ -193,7 +191,7 @@ void RunInference(Settings* s) {
   }
   BMP bmp(s->input_bmp_name.c_str());
   std::vector<uint8_t> in = parse_bmp(&bmp, &image_width, &image_height, &image_channels, s);
-
+  
   int input = interpreter->inputs()[0];
   if (s->verbose) 
     LOG(INFO) << "input: " << input << "\n";
@@ -221,8 +219,7 @@ void RunInference(Settings* s) {
   if (s->verbose)
     PrintInterpreterState(interpreter.get());
 
-  // get input dimension from the input tensor metadata
-  // assuming one input only
+  // get input dimension from the input tensor metadata...assuming one input only
   TfLiteIntArray* dims = interpreter->tensor(input)->dims;
   int wanted_height = dims->data[1];
   int wanted_width = dims->data[2];
@@ -282,7 +279,7 @@ void RunInference(Settings* s) {
   }
 
   const float threshold = THRESHOLD;
-  std::vector<std::pair<float, int>> top_results;
+  std::vector<std::tuple<float, int, int>> top_results;
   int output = interpreter->outputs()[0];
 
   std::vector<string> labels;
@@ -305,6 +302,7 @@ void RunInference(Settings* s) {
   const float* detection_classes = TensorData<float>(output_classes_);
   const float* detection_scores = TensorData<float>(output_scores_);
   const int num_detections = *TensorData<float>(num_detections_);
+  
   if (s->verbose) {
     LOG(INFO) << "number of detections: " << num_detections << "\n";
     // Display all the detection details...
@@ -345,11 +343,27 @@ void RunInference(Settings* s) {
   // Display dectection summaries for those above the threshold
   LOG(INFO) << "------ detections > " << threshold << " ------\n";
   for (const auto& result : top_results) {
-    const float confidence = result.first;
-    const int index = result.second;
+    const float confidence    = std::get<0>(result);
+    const int class_index     = std::get<1>(result);
+    const int detection_index = std::get<2>(result);
+    
     // + 1 on the class index given tflite conversion removes the initial background class
-    LOG(INFO) << "object = " << labels[index + 1] << " @ " << confidence << "\n";
+    LOG(INFO) << "object [" << detection_index << "] = " << labels[class_index + 1] << " @ " << confidence << "\n";
+    
+    // Draw the bounding box on the image
+    if (s->output) {
+      const float ymin = detection_locations[(sizeof(float) * detection_index) + 0] * image_height;
+      const float xmin = detection_locations[(sizeof(float) * detection_index) + 1] * image_width;
+      const float ymax = detection_locations[(sizeof(float) * detection_index) + 2] * image_height;
+      const float xmax = detection_locations[(sizeof(float) * detection_index) + 3] * image_width;
+      auto color = ColorPalette[detection_index];
+      auto R = color[0], G = color[1], B = color[2], A = color[3];
+      draw_bounding_box(&bmp, xmin, ymin, xmax - xmin, ymax - ymin, R, G, B, A);
+    }
   }
+  // Save the image to a (new) bmp file
+  if (s->output)
+    write_bmp(&bmp, s);
 }
 
 void display_usage() {
@@ -361,6 +375,7 @@ void display_usage() {
       << "--image, -i: image_name.bmp\n"
       << "--labels, -l: labels for the model\n"
       << "--tflite_model, -m: model_name.tflite\n"
+      << "--output, -o: [0|1] save annotated output image\n"
       << "--profiling, -p: [0|1], profiling or not\n"
       << "--num_results, -r: number of results to show\n"
       << "--threads, -t: number of threads\n"
@@ -380,6 +395,7 @@ int Main(int argc, char** argv) {
         {"image", required_argument, nullptr, 'i'},
         {"labels", required_argument, nullptr, 'l'},
         {"tflite_model", required_argument, nullptr, 'm'},
+        {"output", required_argument, nullptr, 'o'},
         {"profiling", required_argument, nullptr, 'p'},
         {"num_results", required_argument, nullptr, 'r'},
         {"threads", required_argument, nullptr, 't'},
@@ -389,7 +405,7 @@ int Main(int argc, char** argv) {
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    c = getopt_long(argc, argv, "a:c:f:i:l:m:p:r:t:v:", long_options,
+    c = getopt_long(argc, argv, "a:c:f:i:l:m:o:p:r:t:v:", long_options,
                     &option_index);
 
     /* Detect the end of the options. */
@@ -416,6 +432,10 @@ int Main(int argc, char** argv) {
       case 'm':
         s.model_name = optarg;
         break;
+      case 'o':
+        s.output =
+            strtol(optarg, nullptr, 10);  // NOLINT(runtime/deprecated_fn)
+        break;
       case 'p':
         s.profiling =
             strtol(optarg, nullptr, 10);  // NOLINT(runtime/deprecated_fn)
@@ -425,8 +445,8 @@ int Main(int argc, char** argv) {
             strtol(optarg, nullptr, 10);  // NOLINT(runtime/deprecated_fn)
         break;
       case 't':
-        s.number_of_threads = strtol(  // NOLINT(runtime/deprecated_fn)
-            optarg, nullptr, 10);
+        s.number_of_threads = 
+            strtol(optarg, nullptr, 10);  // NOLINT(runtime/deprecated_fn)
         break;
       case 'v':
         s.verbose =

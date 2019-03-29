@@ -25,6 +25,7 @@ limitations under the License.
 #include "tensorflow/lite/examples/label_image/bitmap_helpers.h"
 
 #define LOG(x) std::cerr
+#define LINE_WIDTH 2
 
 namespace tflite {
 namespace label_image {
@@ -71,6 +72,52 @@ std::vector<uint8_t> decode_bmp(const uint8_t* input, int row_size, int width,
   return output;
 }
 
+std::vector<uint8_t> read_bmp(const std::string& input_bmp_name,
+                              int* width, int* height, int* channels, Settings* s) {
+  int begin, end;
+
+  std::ifstream file(input_bmp_name, std::ios::in | std::ios::binary);
+  if (!file) {
+    LOG(FATAL) << "input file " << input_bmp_name << " not found\n";
+    exit(-1);
+  }
+
+  begin = file.tellg();
+  file.seekg(0, std::ios::end);
+  end = file.tellg();
+  size_t len = end - begin;
+
+  if (s->verbose) 
+    LOG(INFO) << "len: " << len << "\n";
+
+  std::vector<uint8_t> img_bytes(len);
+  file.seekg(0, std::ios::beg);
+  file.read(reinterpret_cast<char*>(img_bytes.data()), len);
+  const int32_t header_size = *(reinterpret_cast<const int32_t*>(img_bytes.data() + 10));
+  *width  = *(reinterpret_cast<const int32_t*>(img_bytes.data() + 18));
+  *height = *(reinterpret_cast<const int32_t*>(img_bytes.data() + 22));
+  const int32_t bpp = *(reinterpret_cast<const int32_t*>(img_bytes.data() + 28));
+  *channels = bpp / 8;
+
+  if (s->verbose)
+    LOG(INFO) << "width, height, channels: " << *width << ", " << *height << ", " << *channels << "\n";
+
+  // there may be padding bytes when the width is not a multiple of 4 bytes
+  // 8 * channels == bits per pixel
+  const int row_size = (8 * *channels * *width + 31) / 32 * 4;
+
+  // if height is negative, data layout is top down
+  // otherwise, it's bottom up
+  bool top_down = (*height < 0);
+
+  if (s->verbose)
+    LOG(INFO) << "row_size: " << row_size << ", top_down: " << top_down << "\n";
+
+  // Decode image, allocating tensor once the image size is known
+  const uint8_t* bmp_pixels = &img_bytes[header_size];
+  return decode_bmp(bmp_pixels, row_size, *width, abs(*height), *channels, top_down);
+}
+
 std::vector<uint8_t> parse_bmp(BMP* bmp, int* width, int* height, int* channels, Settings* s) {
 
   *width = bmp->bmp_info_header.width;
@@ -100,6 +147,11 @@ void write_bmp(BMP* bmp, Settings* s) {
 
   std::string output_bmp_name = "out_" + s->input_bmp_name;  
   bmp->write(output_bmp_name.c_str()); 
+}
+
+void draw_bounding_box(BMP* bmp, int x, int y, int w, int h, int R, int G, int B, int A) {
+
+  bmp->draw_rectangle(x, y, w, h, B, G, R, A, LINE_WIDTH);
 }
 
 }  // namespace label_image

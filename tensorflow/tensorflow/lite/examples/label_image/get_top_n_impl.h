@@ -29,11 +29,11 @@ extern bool input_floating;
 template <class T>
 void get_top_n(const float* scores, const float* classes,
                 int num_detections, size_t num_results,
-                float threshold, std::vector<std::pair<float, int>>* top_results,
+                float threshold, std::vector<std::tuple<float, int, int>>* top_results,
                 bool input_floating) {
   // Will contain top N results in ascending order
-  std::priority_queue<std::pair<float, int>, std::vector<std::pair<float, int>>,
-                      std::greater<std::pair<float, int>>>
+  std::priority_queue<std::tuple<float, int, int>, std::vector<std::tuple<float, int, int>>,
+                      std::greater<std::tuple<float, int, int>>>
       top_result_pq;
   
   for (int i = 0; i < num_detections; ++i) {
@@ -51,7 +51,7 @@ void get_top_n(const float* scores, const float* classes,
       continue;
     }
     // Add the detection in terms of score and class
-    top_result_pq.push(std::pair<float, int>(detection_score, detection_class));
+    top_result_pq.push(std::tuple<float, int, int>(detection_score, detection_class, i));
 
     // If at capacity, kick the smallest value out
     if (top_result_pq.size() > num_results) {

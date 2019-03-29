@@ -1,3 +1,4 @@
 ./tf-cpu-master/*
 *.ipch
 *.bin
+tensorflow/tensorflow/lite/examples/label_image/out_fruit.bmp

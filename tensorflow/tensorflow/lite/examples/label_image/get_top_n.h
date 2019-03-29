@@ -24,14 +24,14 @@ namespace label_image {
 template <class T>
 void get_top_n(const float* scores, const float* classes, 
                 int num_detections, size_t num_results,
-                float threshold, std::vector<std::pair<float, int>>* top_results,
+                float threshold, std::vector<std::tuple<float, int, int>>* top_results,
                 bool input_floating);
 
 // explicit instantiation so that we can use them otherwhere
 template void get_top_n<uint8_t>(const float*, const float*, int, size_t, float,
-                                 std::vector<std::pair<float, int>>*, bool);
+                                 std::vector<std::tuple<float, int, int>>*, bool);
 template void get_top_n<float>(const float*, const float*, int, size_t, float,
-                               std::vector<std::pair<float, int>>*, bool);
+                               std::vector<std::tuple<float, int, int>>*, bool);
 
 }  // namespace label_image
 }  // namespace tflite

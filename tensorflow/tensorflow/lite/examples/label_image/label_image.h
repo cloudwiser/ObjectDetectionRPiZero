@@ -25,6 +25,7 @@ namespace tflite {
 namespace label_image {
 
 struct Settings {
+  bool output = false;
   bool verbose = false;
   bool accel = false;
   bool input_floating = false;
