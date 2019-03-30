@@ -37,5 +37,5 @@ Please chek the master branch in the TensorFlow repo for any reelvant changes
 
 
 <p align="center">
-  <img width="185px" height="300px" src="./assets/out_orange_banana_apple.bmp"/>
+  <img height="186px" width="300px" src="./assets/out_orange_banana_apple.bmp"/>
 </p>
