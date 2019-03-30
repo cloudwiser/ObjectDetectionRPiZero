@@ -35,5 +35,6 @@ Run `label_image` with `-h` and/or read the source code for the complete set of 
 Note that this application is based heavily on the current TensorFlow Lite`label_image` example code. 
 Please chek the master branch in the TensorFlow repo for any reelvant changes 
 
-
-<img align="middle" width="300" height="185" src=./assets/out_orange_banana_apple.bmp>
+<p align="center">
+  <img width="185" height="300" src="./assets/out_orange_banana_apple.bmp">
+</p>
