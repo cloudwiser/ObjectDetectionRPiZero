@@ -36,4 +36,4 @@ Note that this application is based heavily on the current TensorFlow Lite`label
 Please chek the master branch in the TensorFlow repo for any reelvant changes 
 
 
-<img align="center" width="300" height="185" src=./tensorflow/tensorflow/lite/tools/make/gen/rpi_armv6/bin/orange_banana_apple.bmp>
+<img align="middle" width="300" height="185" src=./assets/orange_banana_apple.bmp>
