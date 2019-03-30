@@ -36,4 +36,4 @@ Note that this application is based heavily on the current TensorFlow Lite`label
 Please chek the master branch in the TensorFlow repo for any reelvant changes 
 
 
-<img align="middle" width="300" height="185" src=./assets/orange_banana_apple.bmp>
+<img align="middle" width="300" height="185" src=./assets/out_orange_banana_apple.bmp>
