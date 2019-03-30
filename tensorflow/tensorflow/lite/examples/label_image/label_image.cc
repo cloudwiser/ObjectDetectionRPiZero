@@ -370,10 +370,10 @@ void RunInference(Settings* s) {
     
     // Draw the bounding box for the object on the image - we use the same y axis flip as above
     if (s->output) {
-      const float ymax = image_height * (1 - detection_locations[(sizeof(float) * detection_index) + 0]);
-      const float xmin = detection_locations[(sizeof(float) * detection_index) + 1] * image_width;
-      const float ymin = image_height * (1 - detection_locations[(sizeof(float) * detection_index) + 2]);
-      const float xmax = detection_locations[(sizeof(float) * detection_index) + 3] * image_width;
+      const float ymax = (1 - detection_locations[(sizeof(float) * detection_index) + 0]) * image_height;
+      const float xmin =      detection_locations[(sizeof(float) * detection_index) + 1]  * image_width;
+      const float ymin = (1 - detection_locations[(sizeof(float) * detection_index) + 2]) * image_height;
+      const float xmax =      detection_locations[(sizeof(float) * detection_index) + 3]  * image_width;
       auto color = ColorPalette[detection_index];
       auto R = color[0], G = color[1], B = color[2], A = color[3];
       draw_bounding_box(&bmp, xmin, ymin, xmax - xmin, ymax - ymin, R, G, B, A);
@@ -393,7 +393,7 @@ void display_usage() {
       << "--image, -i: image_name.bmp\n"
       << "--labels, -l: labels for the model\n"
       << "--tflite_model, -m: model_name.tflite\n"
-      << "--output, -o: [0|1] save annotated output image\n"
+      << "--output, -o: [0|1] save output to file\n"
       << "--profiling, -p: [0|1], profiling or not\n"
       << "--num_results, -r: number of results to show\n"
       << "--threads, -t: number of threads\n"
