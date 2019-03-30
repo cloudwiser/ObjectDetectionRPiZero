@@ -325,10 +325,10 @@ void RunInference(Settings* s) {
       const std::string cls = labels[detection_classes[d] + 1];
       // Extract the score and bounding rectangle...from observation, we seem to have to flip the y-axes
       const float score = detection_scores[d];
-      const float ymax = image_height * (1 - detection_locations[(sizeof(float) * d) + 0]);
-      const float xmin = detection_locations[(sizeof(float) * d) + 1] * image_width;
-      const float ymin = image_height * (1 - detection_locations[(sizeof(float) * d) + 2]);
-      const float xmax = detection_locations[(sizeof(float) * d) + 3] * image_width;
+      const float ymax = (1 - detection_locations[(sizeof(float) * d) + 0]) * image_height;
+      const float xmin =      detection_locations[(sizeof(float) * d) + 1]  * image_width;
+      const float ymin = (1 - detection_locations[(sizeof(float) * d) + 2]) * image_height;
+      const float xmax =      detection_locations[(sizeof(float) * d) + 3]  * image_width;
       LOG(INFO) << "------ detection: " << d << " ------\n";
       LOG(INFO) << " score = " << score << "\n";
       LOG(INFO) << " class = " << cls << "\n";
