@@ -32,10 +32,10 @@ $ ./label_image -i orange_banana_apple.bmp -m ./coco_ssd_mobilenet_v1_1.0_quant_
 
 Run `label_image` with `-h` and/or read the source code for the complete set of command line options
 
-Note that this application is based heavily on the current TensorFlow Lite`label_image` example code. 
-Please chek the master branch in the TensorFlow repo for any reelvant changes 
-
+This application is based on the`label_image` example code in the Tensorflow Lite repo at https://github.com/tensorflow/tensorflow/tree/master/tensorflow/lite/examples/label_image 
+ 
 
 <p align="center">
   <img height="186px" width="300px" src="./assets/out_orange_banana_apple.bmp"/>
 </p>
+<p align="center">Sample BMP output showing objects detected above the threshold<p align="center">
