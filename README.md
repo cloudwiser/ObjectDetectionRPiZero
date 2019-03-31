@@ -36,6 +36,6 @@ This application is based on the`label_image` example code in the Tensorflow Lit
  
 
 <p align="center">
-  <img height="186px" width="300px" src="./assets/out_orange_banana_apple.bmp"/>
+  <img height="186px" width="300px" border="1" src="./assets/out_orange_banana_apple.bmp"/>
 </p>
 <p align="center">Sample BMP output showing objects detected above the threshold<p align="center">
