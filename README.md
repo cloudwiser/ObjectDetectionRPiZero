@@ -25,9 +25,9 @@ and then run `label_image` as follows. Note: the `-o 1` option writes the output
 ```sh
 $ cd ~/tensorflow/tensorflow/lite/tools/make/gen/rpi_armv6/bin
 
-$ ./label_image -i fruit.bmp -m ./coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/detect.tflite -l ./coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/labelmap.txt -v 1
+$ ./label_image -i fruit.bmp -m ./models/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/detect.tflite -l ./models/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/labelmap.txt -v 1
 
-$ ./label_image -i orange_banana_apple.bmp -m ./coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/detect.tflite -l ./coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/labelmap.txt -o 1
+$ ./label_image -i orange_banana_apple.bmp -m ./models/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/detect.tflite -l ./models/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/labelmap.txt -o 1
 ```
 
 Run `label_image` with `-h` and/or read the source code for the complete set of command line options
