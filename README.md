@@ -30,6 +30,8 @@ $ ./label_image -i fruit.bmp -m ./models/coco_ssd_mobilenet_v1_1.0_quant_2018_06
 $ ./label_image -i orange_banana_apple.bmp -m ./models/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/detect.tflite -l ./models/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29/labelmap.txt -o 1
 ```
 
+Typical inference speeds for the sample `orange_banana_apple.bmp` test image provided is ~7000 ms on a Raspberry Pi Zero W
+
 Run `label_image` with `-h` and/or read the source code for the complete set of command line options
 
 This application is based on the`label_image` example code in the Tensorflow Lite repo at https://github.com/tensorflow/tensorflow/tree/master/tensorflow/lite/examples/label_image 
