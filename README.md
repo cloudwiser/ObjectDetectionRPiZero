@@ -40,4 +40,4 @@ This application is based on the`label_image` example code in the Tensorflow Lit
 <p align="center">
   <img height="186px" width="300px" border="2" src="./assets/out_orange_banana_apple.bmp"/>
 </p>
-<p align="center">Sample BMP output showing objects detected above the threshold<p align="center">
+<p align="center">Sample BMP output showing MS-COCO objects detected above the set threshold<p align="center">
